@@ -72,6 +72,7 @@ skimr::skim(yrbss)
 You will first start with analyzing the `weight` of participants in kilograms. Using visualization and summary statistics, describe the distribution of weights. How many observations are we missing weights from?
 
 ```{r, eda_on_weight}
+
 yrbss%>%
   ggplot(aes(x=weight))+
   geom_boxplot(outlier.colour="red")+
