@@ -78,6 +78,8 @@ yrbss%>%
   geom_boxplot(outlier.colour="red")+
   theme_economist()
 
+correlation <-COR(x=yrbss$weight, y=yrbss$physically_active_7d)
+
 yrbss%>%
   summarize(
     min_weight=min(weight, na.rm=TRUE), 
