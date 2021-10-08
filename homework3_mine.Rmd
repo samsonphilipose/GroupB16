@@ -574,7 +574,6 @@ recessions
 - to colour the ribbons blue/red we must see whether the spread is positive or negative and then use `geom_ribbon()`. You should be familiar with this from last week's homework on the excess weekly/monthly rentals of Santander Bikes in London.
 
 
-
 # Challenge 2: GDP components over time and among countries
 
 At the risk of oversimplifying things, the main components of gross domestic product, GDP are personal consumption (C), business investment (I), government spending (G) and net exports (exports - imports). You can read more about GDP and the different approaches in calculating at the [Wikipedia GDP page](https://en.wikipedia.org/wiki/Gross_domestic_product).
@@ -594,17 +593,73 @@ UN_GDP_data  <-  read_excel(here::here("data", "Download-GDPconstant-USD-countri
 
 
 ```{r reshape_GDP_data}
+#rearrange the data and make it longer 
+tidy_GDP_data  <-  UN_GDP_data %>% 
+  pivot_longer(cols = c(4:51), names_to = "year", values_to = "value") %>% 
+  pivot_wider(names_from = "IndicatorName", values_from = "value") %>% 
+  
+#rename the columns 
+  rename(Exports = "Exports of goods and services", 
+         "Government expenditure" = "General government final consumption expenditure", 
+         "Household expenditure" = "Household consumption expenditure (including Non-profit institutions serving households)", 
+         Imports = "Imports of goods and services")
 
-tidy_GDP_data  <-  ?????????????????????????
+#divide the value by 1e9
+tidy_GDP_data[,4:20] = tidy_GDP_data[,4:20] / 1e9
 
 glimpse(tidy_GDP_data)
 
-
 # Let us compare GDP components for these 3 countries
-country_list <- c("United States","India", "Germany")
+country_list <- c("United States","India", "China")
 ```
 
 First, can you produce this plot?
+
+```{r}
+#set up a new datatable
+plot_data <- tidy_GDP_data %>% 
+  
+#choose the 3 countries
+  filter(Country %in% country_list) %>%
+  
+#select the needed columns
+  select(c("Country", "year", "Gross capital formation", "Exports", "Government expenditure", "Household expenditure", "Imports")) %>% 
+   
+
+#make it longer for ggplot 
+  pivot_longer(cols = c(3:7), names_to = "Indicator", values_to = "value") %>% 
+
+#change the "year"(character) to "Year"(double)
+  mutate(Year = as.numeric(year)) 
+```
+
+```{r}
+
+#the whole ggplot
+plot_data %>% 
+  group_by(Indicator) %>% 
+  ggplot(aes(x = Year, y = value, color = Indicator)) + #color different indicator
+  
+#set the x&y axis limits and breaks  
+  scale_x_continuous(limits = c(1970,2020), breaks = seq(1970, 2010, by = 10)) +
+  scale_y_continuous(limits = c(0,12500), breaks = seq(0,12500, by = 2500)) +
+  
+  geom_line(size = 1) +
+  
+#split into different countries
+  facet_wrap(~Country) +
+  
+#change the background color
+  theme_bw() +
+  
+#labs the legend and titles
+  labs(color = "Components of GDP",
+       title = "GDP components over time", 
+       subtitle = "In constant 2010 USD", 
+       y = "Billion US$", 
+       x = "")
+  
+```
 
 
 ```{r gdp1, echo=FALSE, out.width="100%"}
@@ -616,6 +671,42 @@ Secondly, recall that GDP is the sum of Household Expenditure (Consumption *C*),
 
 > What is the % difference between what you calculated as GDP and the GDP figure included in the dataframe?
 
+```{r}
+#make a new table 
+added_GDP <- plot_data %>% 
+  pivot_wider(names_from = "Indicator", values_from = "value") %>% #here we make it longer
+  
+#rename the columns 
+  rename(Gross_capital_formation = "Gross capital formation", 
+         Exports = "Exports", 
+         Government_expenditure = "Government expenditure", 
+         Household_expenditure = "Household expenditure", 
+         Imports = "Imports") %>% 
+  
+#calculate the added GDP
+  mutate(Added_GDP = 
+           Gross_capital_formation + 
+           Exports + 
+           Government_expenditure + 
+           Household_expenditure - 
+           Imports)
+  
+#compare with the original GDP
+
+  #select the data in tidy_GDP_data we need 
+merge1 <- tidy_GDP_data %>% 
+  select(c("Country", "year", "Gross Domestic Product (GDP)")) 
+
+  #left join it into added GDP
+comparison <- 
+  left_join(added_GDP, merge1, by = c("Country", "year")) %>% 
+  select(c("Country", "year", "Added_GDP", "Gross Domestic Product (GDP)")) %>% 
+  mutate(percentage_dif = (Added_GDP - `Gross Domestic Product (GDP)`) / `Gross Domestic Product (GDP)`)
+  
+comparison
+#Here we can see, for those 3 countries, the added GDP is similar to the given values and % difference is close too. 
+```
+
 
 ```{r gdp2, echo=FALSE, out.width="100%"}
 knitr::include_graphics(here::here("images", "gdp2.png"), error = FALSE)
@@ -625,8 +716,15 @@ knitr::include_graphics(here::here("images", "gdp2.png"), error = FALSE)
 
 > What is this last chart telling you? Can you explain in a couple of paragraphs the different dynamic among these three countries? 
 
+#We can discover that the stage of development has some relationship with the make up of GDP. For example, the % of house hold expenditure in India is much heavier than US and Germany, which demonstrates that other parts had not developed much. Yet with the development of economics, more capital was used in investment and net export may went up because of increasing imports.
+
+#As for Germany, there is an obvious trend of increasing net exports with investment and consumption reductio. That may due to a comparatively high degree of developmrnt, with low GDP growth and low consumption. 
+
+#Recent years, the government has become somehow "laissez faire", and the economics growth were more related with the consumption growth. Though the US and Germany are both developed countries, it has a larger part of consumption than Germany. 
 
 > If you want to, please change `country_list <- c("United States","India", "Germany")` to include your own country and compare it with any two other countries you like
+
+#For example, I use China instead of Germany. 
 
 
 # Deliverables
