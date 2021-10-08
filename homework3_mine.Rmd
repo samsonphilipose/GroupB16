@@ -318,7 +318,11 @@ infer_director <- dirrate %>%
 
 infer_director
 
-
+meanrating<-
+  dirrate%>%
+  group_by(director)%>%
+  summarise( mean_rating=mean(rating))%>%
+  rename(director_name=director)
 
 Spiel_ci <- dirrate %>% 
   filter(director=="Steven Spielberg")%>%
@@ -326,7 +330,9 @@ Spiel_ci <- dirrate %>%
   specify(response = rating) %>% 
   generate(reps = 5000, type = "bootstrap") %>% 
   calculate(stat = "mean") %>% 
-  get_confidence_interval(level = 0.95, type = "percentile")
+  get_confidence_interval(level = 0.95, type = "percentile")%>%
+  mutate(director_name="Steven Spielberg")
+
 
 Burt_ci <- dirrate %>% 
   filter(director=="Tim Burton")%>%
@@ -334,8 +340,32 @@ Burt_ci <- dirrate %>%
   specify(response = rating) %>% 
   generate(reps = 5000, type = "bootstrap") %>% 
   calculate(stat = "mean") %>% 
-  get_confidence_interval(level = 0.95, type = "percentile")
+  get_confidence_interval(level = 0.95, type = "percentile")%>%
+  mutate(director_name="Tim Burton")
 
+dir<-full_join( Spiel_ci,Burt_ci)
+
+finaldir<-full_join(dir,meanrating)
+
+finaldir%>%
+  ggplot(aes(y=director_name))+
+  geom_linerangeh(aes(xmin=lower_ci, 
+                      xmax=upper_ci,
+                      width=0.5,
+                      size=9, 
+                      colour=director_name))+
+  geom_point(data=meanrating, 
+             aes(x=mean_rating, 
+                 y=director_name, 
+                 size=9,
+                 width=12,
+                 colour="white"))+
+  theme_economist()+
+  labs(title="Do Spielberg and Burton have the same IMDB ratings?",
+       subtitle = "95% confidence intervals do not overlap",
+       x="Mean IMDB ratings",
+       y="")
+  
 
 
 ```
