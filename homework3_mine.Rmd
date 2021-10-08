@@ -351,20 +351,29 @@ finaldir%>%
   ggplot(aes(y=director_name))+
   geom_linerangeh(aes(xmin=lower_ci, 
                       xmax=upper_ci,
-                      width=0.5,
-                      size=9, 
+                      width=3,
+                      size=10, 
                       colour=director_name))+
   geom_point(data=meanrating, 
              aes(x=mean_rating, 
                  y=director_name, 
-                 size=9,
-                 width=12,
-                 colour="white"))+
+                 size=12,
+                 colour="white", 
+                 show.legend=FALSE))+
   theme_economist()+
+  geom_text(aes(x= mean_rating, label=round(mean_rating, 2)),
+            vjust=-1.5, hjust="inward", size=12,
+            show.legend=FALSE)+
+  geom_text(aes(x= lower_ci, label=round(lower_ci, 2)),
+            vjust=1.5, hjust="inward", size=12,
+            show.legend=FALSE)+
+  geom_text(aes(x= upper_ci, label=round(upper_ci, 2)),
+            vjust=1.5, hjust="inward", size=12,
+            show.legend=FALSE)+
   labs(title="Do Spielberg and Burton have the same IMDB ratings?",
        subtitle = "95% confidence intervals do not overlap",
        x="Mean IMDB ratings",
-       y="")
+       y="", )
   
 
 
